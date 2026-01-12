@@ -135,6 +135,41 @@ function resetGame() {
 
 startGame();
 </script>
+<script>
+let playData = JSON.parse(localStorage.getItem("playData")) || {};
 
+document.getElementById("gameForm")?.addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  let id = document.getElementById("haydayId").value.trim();
+  if (!id) return;
+
+  if (!playData[id]) {
+    playData[id] = 0;
+  }
+
+  playData[id]++;
+  localStorage.setItem("playData", JSON.stringify(playData));
+
+  let count = playData[id];
+  let result = "Lose ❌";
+
+  // VERY HARD LOGIC
+  if (count >= 15 && count % 50 === 0) {
+    result = "Win 🎉 (Very Rare)";
+  } else if (count % 9 === 0) {
+    result = "Draw 😐";
+  }
+
+  document.getElementById("message").innerHTML =
+    "ধন্যবাদ!<br>আপনি " + count + " বার খেলেছেন<br>Result: " + result;
+
+  // Google Form submit
+  fetch("https://docs.google.com/forms/d/e/1FAIpQLSeT8s-lm2MLxjRymTY5f8G5ucq7q2zpkPbkwzmbwicQn2PGMw/formResponse", {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body:
+      "entry.1440188556=" + count
 </body>
   </html>
