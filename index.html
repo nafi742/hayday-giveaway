@@ -1,175 +1,134 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <title>Hay Day Elite Farmers - Bangladesh Giveaway</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Hay Day Elite Farmers - Bangladesh Giveaway</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Bangla Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali&display=swap" rel="stylesheet">
 
-  <style>
-    body { 
-      font-family: 'Noto Sans Bengali', Arial, sans-serif; 
-      text-align: center; 
-      background: #ffffff;
-    }
-    h2 {
-      margin-top: 10px;
-    }
-    .board {
-      display: grid;
-      grid-template-columns: repeat(3, 90px);
-      gap: 6px;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    .cell {
-      width: 90px;
-      height: 90px;
-      font-size: 36px;
-      background: #f2f2f2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-    }
-    button {
-      margin-top: 15px;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-    .footer {
-      margin-top: 20px;
-      font-size: 14px;
-    }
-  </style>
+<style>
+body{
+  font-family:'Noto Sans Bengali',Arial,sans-serif;
+  text-align:center;
+}
+.board{
+  display:grid;
+  grid-template-columns:repeat(3,90px);
+  gap:6px;
+  justify-content:center;
+  margin-top:15px;
+}
+.cell{
+  width:90px;
+  height:90px;
+  font-size:36px;
+  background:#f2f2f2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:6px;
+}
+button,input{
+  margin-top:10px;
+  padding:8px;
+  font-size:16px;
+}
+</style>
 </head>
 
 <body>
 
 <h2>Hay Day Elite Farmers - Bangladesh</h2>
-<h3>Giveaway</h3>
-
-<p><b>Winning Chance: 5%</b></p>
-
+<b>Giveaway</b>
+<p>Winning Chance: 5%</p>
 <p>আমরা কই না আমরা সেরা, মানুষ কই আমরা সেরা।</p>
+
+<input id="haydayId" placeholder="Hay Day ID দিন">
+<br>
+<button onclick="startSession()">Start Game</button>
+
+<p id="message"></p>
 
 <div class="board" id="board"></div>
 <p id="result"></p>
 
 <button onclick="resetGame()">🔄 Play Again</button>
 
-<div class="footer">
-  খেলা জন্য Hay Day Elite Farmers - Bangladesh এডমিনদের পক্ষে থেকে ধন্যবাদ
-</div>
+<p>খেলা জন্য Hay Day Elite Farmers - Bangladesh এডমিনদের পক্ষে থেকে ধন্যবাদ</p>
 
 <script>
-let board;
-let gameOver;
-let playerCanWin;
+let board=[],gameOver=false,allowWin=false,playerId="";
+const winPatterns=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8]];
+const boardDiv=document.getElementById("board");
+const result=document.getElementById("result");
+let playData=JSON.parse(localStorage.getItem("playData"))||{};
 
-const winPatterns = [
-  [0,1,2],[3,4,5],[6,7,8],
-  [0,3,6],[1,4,7],[2,5,8],
-  [0,4,8],[2,4,6]
-];
+function startSession(){
+  playerId=document.getElementById("haydayId").value.trim();
+  if(!playerId){alert("Hay Day ID দিন");return;}
+  playData[playerId]=(playData[playerId]||0)+1;
+  localStorage.setItem("playData",JSON.stringify(playData));
+  let count=playData[playerId];
+  allowWin=(count>=15 && count%50===0);
+  document.getElementById("message").innerHTML=
+  "ধন্যবাদ!<br>আপনি "+count+" বার খেলেছেন";
+  startGame();
+}
 
-const boardDiv = document.getElementById("board");
-const result = document.getElementById("result");
-
-function startGame() {
-  board = Array(9).fill("");
-  gameOver = false;
-  playerCanWin = Math.random() < 0.05;
-  boardDiv.innerHTML = "";
-  result.innerText = "";
-
-  for (let i = 0; i < 9; i++) {
-    let cell = document.createElement("div");
-    cell.className = "cell";
-    cell.onclick = () => playerMove(i, cell);
-    boardDiv.appendChild(cell);
+function startGame(){
+  board=Array(9).fill("");
+  gameOver=false;
+  boardDiv.innerHTML="";
+  result.innerText="";
+  for(let i=0;i<9;i++){
+    let c=document.createElement("div");
+    c.className="cell";
+    c.onclick=()=>playerMove(i,c);
+    boardDiv.appendChild(c);
   }
 }
 
-function playerMove(i, cell) {
-  if (board[i] || gameOver) return;
-  board[i] = "X";
-  cell.innerText = "X";
-
-  if (checkWin("X")) {
-    if (playerCanWin) {
-      result.innerText = "🎉 অভিনন্দন! আপনি জিতেছেন!";
-    } else {
-      botMove();
-    }
-    gameOver = true;
-    return;
+function playerMove(i,c){
+  if(board[i]||gameOver)return;
+  board[i]="X"; c.innerText="X";
+  if(checkWin("X")){
+    result.innerText=allowWin?"🎉 আপনি জিতেছেন!":"😐 Draw";
+    gameOver=true;return;
   }
   botMove();
 }
 
-function botMove() {
-  if (gameOver) return;
-  let empty = board.map((v,i)=>v==""?i:null).filter(v=>v!==null);
-  if (empty.length === 0) return;
-
-  let move = empty[Math.floor(Math.random() * empty.length)];
-  board[move] = "O";
-  boardDiv.children[move].innerText = "O";
-
-  if (checkWin("O")) {
-    result.innerText = "❌ আপনি হেরে গেছেন, আবার চেষ্টা করুন";
-    gameOver = true;
+function botMove(){
+  let empty=board.map((v,i)=>v==""?i:null).filter(v=>v!==null);
+  if(empty.length===0)return;
+  let move=findBestMove("O") ?? empty[Math.floor(Math.random()*empty.length)];
+  board[move]="O";
+  boardDiv.children[move].innerText="O";
+  if(checkWin("O")){
+    result.innerText="❌ আপনি হেরে গেছেন";
+    gameOver=true;
   }
 }
 
-function checkWin(p) {
-  return winPatterns.some(w => w.every(i => board[i] === p));
+function findBestMove(p){
+  for(let w of winPatterns){
+    let cells=w.map(i=>board[i]);
+    if(cells.filter(v=>v===p).length===2 && cells.includes("")){
+      return w[cells.indexOf("")];
+    }
+  }
+  return null;
 }
 
-function resetGame() {
-  startGame();
+function checkWin(p){
+  return winPatterns.some(w=>w.every(i=>board[i]===p));
 }
 
-startGame();
+function resetGame(){
+  if(playerId)startGame();
+}
 </script>
-<script>
-let playData = JSON.parse(localStorage.getItem("playData")) || {};
 
-document.getElementById("gameForm")?.addEventListener("submit", function(e) {
-  e.preventDefault();
-
-  let id = document.getElementById("haydayId").value.trim();
-  if (!id) return;
-
-  if (!playData[id]) {
-    playData[id] = 0;
-  }
-
-  playData[id]++;
-  localStorage.setItem("playData", JSON.stringify(playData));
-
-  let count = playData[id];
-  let result = "Lose ❌";
-
-  // VERY HARD LOGIC
-  if (count >= 15 && count % 50 === 0) {
-    result = "Win 🎉 (Very Rare)";
-  } else if (count % 9 === 0) {
-    result = "Draw 😐";
-  }
-
-  document.getElementById("message").innerHTML =
-    "ধন্যবাদ!<br>আপনি " + count + " বার খেলেছেন<br>Result: " + result;
-
-  // Google Form submit
-  fetch("https://docs.google.com/forms/d/e/1FAIpQLSeT8s-lm2MLxjRymTY5f8G5ucq7q2zpkPbkwzmbwicQn2PGMw/formResponse", {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body:
-      "entry.1440188556=" + count
 </body>
-  </html>
+</html>
